@@ -1,0 +1,1119 @@
+<!doctype html>
+<html lang="vi" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trò chơi học pập - Pin Điện &amp; Điện Phân</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <style>
+    body {
+      box-sizing: border-box;
+      font-family: 'Quicksand', sans-serif;
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
+      50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.8); }
+    }
+    
+    @keyframes bounce-in {
+      0% { transform: scale(0.3); opacity: 0; }
+      50% { transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    @keyframes slide-up {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-100px) rotate(720deg); opacity: 0; }
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+    
+    @keyframes timer-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .animate-bounce-in { animation: bounce-in 0.6s ease-out; }
+    .animate-slide-up { animation: slide-up 0.5s ease-out; }
+    .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    .animate-shake { animation: shake 0.5s ease-in-out; }
+    .animate-timer-pulse { animation: timer-pulse 0.5s ease-in-out; }
+    
+    .confetti-piece {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      animation: confetti 1s ease-out forwards;
+    }
+    
+    .option-btn {
+      transition: all 0.3s ease;
+    }
+    
+    .option-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .progress-fill {
+      transition: width 0.5s ease;
+    }
+    
+    .drag-item {
+      cursor: grab;
+      transition: all 0.2s ease;
+    }
+    
+    .drag-item:active {
+      cursor: grabbing;
+    }
+    
+    .drop-zone {
+      transition: all 0.3s ease;
+    }
+    
+    .drop-zone.drag-over {
+      background-color: rgba(99, 102, 241, 0.2);
+      border-color: #6366f1;
+    }
+    
+    .timer-warning {
+      color: #ef4444;
+      animation: timer-pulse 0.5s ease-in-out infinite;
+    }
+    
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+ </head>
+ <body class="h-full m-0 p-0 overflow-auto">
+  <div id="app" class="min-h-full w-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500"><!-- Start Screen -->
+   <div id="start-screen" class="min-h-full flex items-center justify-center p-4">
+    <div class="glass-effect rounded-3xl p-8 max-w-lg w-full text-center animate-bounce-in shadow-2xl">
+     <div class="text-6xl mb-4">
+      ⚡🔋
+     </div>
+     <h1 id="main-title" class="text-3xl font-bold text-indigo-700 mb-2">PIN ĐIỆN &amp; ĐIỆN PHÂN</h1>
+     <p class="text-purple-600 mb-2">Ôn tập chương 5</p>
+     <p id="teacher-credit" class="text-sm text-gray-500 mb-6">Thiết kế: <span class="font-semibold">Nguyễn Mạnh Hưng</span></p>
+     <div class="bg-indigo-50 rounded-2xl p-4 mb-6">
+      <div class="mb-4"><label class="block text-left text-indigo-700 font-semibold mb-2">👤 Họ và tên:</label> <input type="text" id="student-name" placeholder="Nhập họ tên của bạn..." class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 focus:border-indigo-500 focus:outline-none transition">
+      </div>
+      <div><label class="block text-left text-indigo-700 font-semibold mb-2">🏫 Lớp:</label> <input type="text" id="student-class" placeholder="Ví dụ: 11A1..." class="w-full px-4 py-3 rounded-xl border-2 border-indigo-200 focus:border-indigo-500 focus:outline-none transition">
+      </div>
+     </div>
+     <div class="bg-yellow-50 rounded-xl p-4 mb-6 text-left">
+      <h3 class="font-bold text-yellow-700 mb-2">📋 Hướng dẫn:</h3>
+      <ul class="text-sm text-yellow-800 space-y-1">
+       <li>• 20 câu hỏi - Tổng điểm: 100</li>
+       <li>• Thời gian: 15s (Nhận biết), 30s (Thông hiểu), 120s (Vận dụng)</li>
+       <li>• Trả lời đúng: +5 điểm/câu</li>
+       <li>• Có phản hồi ngay sau mỗi câu</li>
+      </ul>
+     </div><button id="start-btn" onclick="startGame()" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xl rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition transform hover:scale-105 shadow-lg"> 🚀 BẮT ĐẦU CHƠI </button> <button onclick="showResults()" class="w-full mt-4 py-3 bg-white border-2 border-indigo-300 text-indigo-600 font-semibold rounded-2xl hover:bg-indigo-50 transition"> 📊 Xem kết quả học sinh </button>
+    </div>
+   </div><!-- Game Screen -->
+   <div id="game-screen" class="min-h-full p-4 hidden">
+    <div class="max-w-3xl mx-auto"><!-- Header -->
+     <div class="glass-effect rounded-2xl p-4 mb-4 shadow-lg">
+      <div class="flex justify-between items-center mb-3">
+       <div class="flex items-center gap-3"><span class="text-2xl">⚡</span> <span id="player-name" class="font-bold text-indigo-700"></span>
+       </div>
+       <div class="flex items-center gap-4">
+        <div class="bg-yellow-100 px-4 py-2 rounded-full"><span class="text-yellow-700 font-bold">🏆 <span id="current-score">0</span>/100</span>
+        </div>
+        <div id="timer-display" class="bg-indigo-100 px-4 py-2 rounded-full"><span class="text-indigo-700 font-bold">⏱️ <span id="timer">30</span>s</span>
+        </div>
+       </div>
+      </div><!-- Progress Bar -->
+      <div class="relative">
+       <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+        <div id="progress-bar" class="progress-fill h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full" style="width: 0%"></div>
+       </div><span id="progress-text" class="absolute right-0 -top-6 text-sm text-indigo-600 font-semibold">Câu 1/20</span>
+      </div>
+     </div><!-- Question Card -->
+     <div id="question-card" class="glass-effect rounded-3xl p-6 shadow-xl animate-slide-up">
+      <div class="flex items-center gap-2 mb-4"><span id="difficulty-badge" class="px-3 py-1 rounded-full text-sm font-semibold"></span> <span id="question-type-badge" class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-semibold"></span>
+      </div>
+      <h2 id="question-text" class="text-xl font-bold text-gray-800 mb-6"></h2>
+      <div id="options-container" class="space-y-3"></div><!-- Drag Drop Container -->
+      <div id="drag-drop-container" class="hidden">
+       <div id="drag-items" class="flex flex-wrap gap-3 mb-6 p-4 bg-gray-50 rounded-xl"></div>
+       <div id="drop-zones" class="space-y-3"></div><button onclick="submitDragDrop()" class="mt-4 w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition"> ✓ Xác nhận đáp án </button>
+      </div>
+     </div><!-- Feedback Modal -->
+     <div id="feedback-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div id="feedback-content" class="glass-effect rounded-3xl p-8 max-w-md w-full text-center animate-bounce-in">
+       <div id="feedback-icon" class="text-6xl mb-4"></div>
+       <h3 id="feedback-title" class="text-2xl font-bold mb-4"></h3>
+       <p id="feedback-text" class="text-gray-700 mb-6"></p><button onclick="nextQuestion()" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition"> Tiếp tục ➜ </button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Result Screen -->
+   <div id="result-screen" class="min-h-full flex items-center justify-center p-4 hidden">
+    <div class="glass-effect rounded-3xl p-8 max-w-lg w-full text-center animate-bounce-in shadow-2xl">
+     <div id="result-confetti" class="relative"></div>
+     <div id="result-icon" class="text-7xl mb-4"></div>
+     <h2 id="result-title" class="text-3xl font-bold mb-2"></h2>
+     <p id="result-name" class="text-lg text-gray-600 mb-4"></p>
+     <div class="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-2xl p-6 mb-6">
+      <div class="text-5xl font-bold text-indigo-700 mb-2">
+       <span id="final-score">0</span>/100
+      </div>
+      <p class="text-gray-600">Điểm số của bạn</p>
+     </div>
+     <div class="grid grid-cols-2 gap-4 mb-6">
+      <div class="bg-green-50 rounded-xl p-4">
+       <div class="text-2xl font-bold text-green-600" id="correct-count">
+        0
+       </div>
+       <p class="text-sm text-green-700">Câu đúng ✓</p>
+      </div>
+      <div class="bg-red-50 rounded-xl p-4">
+       <div class="text-2xl font-bold text-red-600" id="wrong-count">
+        0
+       </div>
+       <p class="text-sm text-red-700">Câu sai ✗</p>
+      </div>
+     </div>
+     <p id="result-message" class="text-gray-700 mb-6"></p><button onclick="restartGame()" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xl rounded-2xl hover:from-indigo-700 hover:to-purple-700 transition transform hover:scale-105 shadow-lg"> 🔄 Chơi lại </button> <button onclick="goHome()" class="w-full mt-3 py-3 bg-white border-2 border-indigo-300 text-indigo-600 font-semibold rounded-2xl hover:bg-indigo-50 transition"> 🏠 Về trang chủ </button>
+    </div>
+   </div><!-- Teacher Results Screen -->
+   <div id="teacher-screen" class="min-h-full p-4 hidden">
+    <div class="max-w-4xl mx-auto">
+     <div class="glass-effect rounded-3xl p-6 shadow-xl">
+      <div class="flex justify-between items-center mb-6">
+       <h2 class="text-2xl font-bold text-indigo-700">📊 Kết quả học sinh</h2>
+       <div class="flex gap-3"><button onclick="downloadResults()" class="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition flex items-center gap-2"> 📥 Tải xuống CSV </button> <button onclick="goHome()" class="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition"> ← Quay lại </button>
+       </div>
+      </div>
+      <div id="results-stats" class="grid grid-cols-3 gap-4 mb-6">
+       <div class="bg-indigo-50 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-indigo-600" id="total-students">
+         0
+        </div>
+        <p class="text-indigo-700">Tổng học sinh</p>
+       </div>
+       <div class="bg-green-50 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-green-600" id="avg-score">
+         0
+        </div>
+        <p class="text-green-700">Điểm trung bình</p>
+       </div>
+       <div class="bg-purple-50 rounded-xl p-4 text-center">
+        <div class="text-3xl font-bold text-purple-600" id="highest-score">
+         0
+        </div>
+        <p class="text-purple-700">Điểm cao nhất</p>
+       </div>
+      </div>
+      <div class="overflow-x-auto">
+       <table class="w-full">
+        <thead>
+         <tr class="bg-indigo-100">
+          <th class="px-4 py-3 text-left rounded-tl-xl">STT</th>
+          <th class="px-4 py-3 text-left">Họ và tên</th>
+          <th class="px-4 py-3 text-left">Lớp</th>
+          <th class="px-4 py-3 text-center">Điểm</th>
+          <th class="px-4 py-3 text-center">Đúng/Tổng</th>
+          <th class="px-4 py-3 text-left rounded-tr-xl">Thời gian</th>
+         </tr>
+        </thead>
+        <tbody id="results-table">
+         <tr>
+          <td colspan="6" class="px-4 py-8 text-center text-gray-500">Chưa có kết quả nào</td>
+         </tr>
+        </tbody>
+       </table>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Questions Database
+    const allQuestions = [
+      // NHẬN BIẾT (8 câu) - 15 giây
+      {
+        id: 1,
+        type: 'multiple',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Pin điện hóa (pin Galvani) là thiết bị chuyển hóa năng lượng nào thành điện năng?',
+        options: ['Hóa năng', 'Nhiệt năng', 'Quang năng', 'Cơ năng'],
+        correct: 0,
+        explanation: 'Pin điện hóa chuyển hóa năng lượng từ phản ứng oxi hóa - khử (hóa năng) thành điện năng.'
+      },
+      {
+        id: 2,
+        type: 'multiple',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Trong pin Galvani, điện cực nào xảy ra quá trình oxi hóa?',
+        options: ['Anode', 'Cathode', 'Cả hai điện cực', 'Không điện cực nào'],
+        correct: 0,
+        explanation: 'Tại anode (cực âm) xảy ra quá trình oxi hóa - kim loại nhường electron.'
+      },
+      {
+        id: 3,
+        type: 'multiple',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Trong pin Galvani, electron di chuyển trong mạch ngoài theo chiều nào?',
+        options: ['Từ anode sang cathode', 'Từ cathode sang anode', 'Di chuyển qua lại', 'Không di chuyển'],
+        correct: 0,
+        explanation: 'Electron di chuyển từ anode (nơi nhường e⁻) sang cathode (nơi nhận e⁻) qua dây dẫn.'
+      },
+      {
+        id: 4,
+        type: 'true-false',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Cathode trong pin điện hóa là nơi xảy ra quá trình khử.',
+        options: ['Đúng', 'Sai'],
+        correct: 0,
+        explanation: 'Đúng! Tại cathode (cực dương), ion kim loại nhận electron và bị khử thành kim loại.'
+      },
+      {
+        id: 5,
+        type: 'multiple',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Cầu muối trong pin Galvani có tác dụng gì?',
+        options: ['Dẫn ion giữa hai dung dịch', 'Dẫn electron', 'Tạo phản ứng hóa học', 'Làm tăng điện áp'],
+        correct: 0,
+        explanation: 'Cầu muối cho phép ion di chuyển giữa hai nửa pin, duy trì sự trung hòa điện tích.'
+      },
+      {
+        id: 6,
+        type: 'multiple',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Trong điện phân dung dịch, tại cathode xảy ra quá trình gì?',
+        options: ['Khử', 'Oxi hóa', 'Cả hai', 'Không có phản ứng'],
+        correct: 0,
+        explanation: 'Tại cathode của bình điện phân, cation di chuyển đến và bị khử (nhận electron).'
+      },
+      {
+        id: 7,
+        type: 'true-false',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Điện phân là quá trình dùng điện năng để thực hiện phản ứng oxi hóa - khử không tự xảy ra.',
+        options: ['Đúng', 'Sai'],
+        correct: 0,
+        explanation: 'Đúng! Điện phân sử dụng năng lượng điện để thúc đẩy các phản ứng không tự phát.'
+      },
+      {
+        id: 8,
+        type: 'multiple',
+        difficulty: 'nhan-biet',
+        time: 15,
+        question: 'Pin lithium-ion trong điện thoại di động hoạt động dựa trên nguyên tắc nào?',
+        options: ['Pin điện hóa', 'Điện phân', 'Nhiệt điện', 'Quang điện'],
+        correct: 0,
+        explanation: 'Pin điện thoại là pin điện hóa, chuyển hóa năng lượng từ phản ứng hóa học thành điện năng.'
+      },
+      
+      // THÔNG HIỂU (8 câu) - 30 giây
+      {
+        id: 9,
+        type: 'multiple',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Trong pin Zn-Cu, kẽm đóng vai trò là anode vì:',
+        options: ['Zn có tính khử mạnh hơn Cu', 'Zn có tính oxi hóa mạnh hơn Cu', 'Cu dẫn điện tốt hơn', 'Cu rẻ hơn Zn'],
+        correct: 0,
+        explanation: 'Zn có tính khử mạnh hơn Cu nên dễ nhường electron hơn, đóng vai trò anode (bị oxi hóa).'
+      },
+      {
+        id: 10,
+        type: 'multiple',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Khi pin Galvani hoạt động, khối lượng điện cực thay đổi như thế nào?',
+        options: ['Anode giảm, cathode tăng', 'Anode tăng, cathode giảm', 'Cả hai đều giảm', 'Cả hai đều tăng'],
+        correct: 0,
+        explanation: 'Tại anode kim loại bị oxi hóa (tan ra) nên khối lượng giảm; tại cathode ion kim loại bị khử (bám vào) nên khối lượng tăng.'
+      },
+      {
+        id: 11,
+        type: 'drag-drop',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Ghép các quá trình với điện cực tương ứng trong pin điện hóa:',
+        pairs: [
+          { item: 'Quá trình oxi hóa', target: 'Anode' },
+          { item: 'Quá trình khử', target: 'Cathode' },
+          { item: 'Kim loại tan ra', target: 'Anode' },
+          { item: 'Ion kim loại bám vào', target: 'Cathode' }
+        ],
+        explanation: 'Anode: oxi hóa, kim loại tan. Cathode: khử, ion kim loại bám vào tạo kim loại.'
+      },
+      {
+        id: 12,
+        type: 'multiple',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Tại sao khi điện phân dung dịch NaCl không thu được Na ở cathode?',
+        options: ['H₂O bị khử trước Na⁺', 'Na tan trong nước', 'NaCl không phân li', 'Dòng điện quá yếu'],
+        correct: 0,
+        explanation: 'Trong dung dịch, H₂O dễ bị khử hơn Na⁺ nên tại cathode thu được H₂ thay vì Na.'
+      },
+      {
+        id: 13,
+        type: 'multiple',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Suất điện động của pin phụ thuộc vào yếu tố nào?',
+        options: ['Bản chất kim loại làm điện cực', 'Kích thước điện cực', 'Màu sắc điện cực', 'Hình dạng bình chứa'],
+        correct: 0,
+        explanation: 'Suất điện động phụ thuộc vào hiệu thế điện cực chuẩn của hai kim loại làm điện cực.'
+      },
+      {
+        id: 14,
+        type: 'situation',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Một học sinh làm pin từ chanh với điện cực Zn và Cu. Tại sao bóng đèn LED có thể sáng?',
+        options: ['Phản ứng oxi hóa khử tạo dòng điện', 'Axit trong chanh phát điện', 'Cu tự phát sáng', 'Zn nóng lên phát điện'],
+        correct: 0,
+        explanation: 'Zn bị oxi hóa nhường electron, electron chạy qua dây dẫn sang Cu làm đèn sáng. Axit trong chanh đóng vai trò dung dịch điện li.'
+      },
+      {
+        id: 15,
+        type: 'multiple',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Trong bình điện phân, dòng điện trong dung dịch được tạo bởi:',
+        options: ['Sự di chuyển của các ion', 'Sự di chuyển của electron', 'Sự dao động của phân tử nước', 'Sự bay hơi của dung môi'],
+        correct: 0,
+        explanation: 'Trong dung dịch điện phân, dòng điện là dòng chuyển dời có hướng của các ion (cation về cathode, anion về anode).'
+      },
+      {
+        id: 16,
+        type: 'multiple',
+        difficulty: 'thong-hieu',
+        time: 30,
+        question: 'Mạ điện dùng phương pháp nào?',
+        options: ['Điện phân với anode là kim loại mạ', 'Pin điện hóa', 'Điện phân nóng chảy', 'Nhiệt luyện'],
+        correct: 0,
+        explanation: 'Mạ điện dùng điện phân: vật cần mạ là cathode, kim loại mạ là anode, dung dịch chứa ion kim loại mạ.'
+      },
+      
+      // VẬN DỤNG (4 câu) - 120 giây
+      {
+        id: 17,
+        type: 'calculation',
+        difficulty: 'van-dung',
+        time: 120,
+        question: 'Pin Zn-Cu có E°(Zn²⁺/Zn) = -0,76V và E°(Cu²⁺/Cu) = +0,34V. Suất điện động chuẩn của pin là:',
+        options: ['1,10V', '0,42V', '-0,42V', '-1,10V'],
+        correct: 0,
+        explanation: 'E°pin = E°cathode - E°anode = E°(Cu²⁺/Cu) - E°(Zn²⁺/Zn) = 0,34 - (-0,76) = 1,10V'
+      },
+      {
+        id: 18,
+        type: 'situation',
+        difficulty: 'van-dung',
+        time: 120,
+        question: 'Để sản xuất nhôm công nghiệp, người ta điện phân Al₂O₃ nóng chảy thay vì điện phân dung dịch AlCl₃. Vì sao?',
+        options: ['Điện phân dung dịch sẽ thu được H₂ thay vì Al', 'AlCl₃ không tan trong nước', 'Al₂O₃ rẻ hơn', 'Điện phân nóng chảy nhanh hơn'],
+        correct: 0,
+        explanation: 'Trong dung dịch, H₂O dễ bị khử hơn Al³⁺ nên tại cathode chỉ thu được H₂. Phải điện phân nóng chảy mới thu được Al.'
+      },
+      {
+        id: 19,
+        type: 'calculation',
+        difficulty: 'van-dung',
+        time: 120,
+        question: 'Cho các cặp oxi hóa - khử: E°(Ag⁺/Ag) = +0,80V; E°(Cu²⁺/Cu) = +0,34V; E°(Zn²⁺/Zn) = -0,76V. Pin nào có suất điện động lớn nhất?',
+        options: ['Pin Zn-Ag', 'Pin Zn-Cu', 'Pin Cu-Ag', 'Bằng nhau'],
+        correct: 0,
+        explanation: 'E°(Zn-Ag) = 0,80 - (-0,76) = 1,56V > E°(Zn-Cu) = 1,10V > E°(Cu-Ag) = 0,46V'
+      },
+      {
+        id: 20,
+        type: 'situation',
+        difficulty: 'van-dung',
+        time: 120,
+        question: 'Muốn mạ bạc lên chiếc nhẫn đồng, cách bố trí nào đúng?',
+        options: ['Nhẫn đồng là cathode, thanh bạc là anode, dung dịch AgNO₃', 'Nhẫn đồng là anode, thanh bạc là cathode, dung dịch AgNO₃', 'Nhẫn đồng là cathode, dung dịch CuSO₄', 'Thanh bạc là cathode, nhẫn đồng là anode'],
+        correct: 0,
+        explanation: 'Vật cần mạ (nhẫn đồng) phải là cathode để ion Ag⁺ bị khử và bám lên. Anode là thanh bạc để bổ sung Ag⁺ vào dung dịch.'
+      }
+    ];
+    
+    // Game State
+    let currentQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let correctAnswers = 0;
+    let timerInterval = null;
+    let timeLeft = 0;
+    let studentName = '';
+    let studentClass = '';
+    let gameStartTime = null;
+    let allResults = [];
+    let draggedItem = null;
+    let dragDropAnswers = {};
+    
+    // Config
+    const defaultConfig = {
+      game_title: 'PIN ĐIỆN & ĐIỆN PHÂN',
+      teacher_name: 'Nguyễn Mạnh Hưng'
+    };
+    
+    let config = { ...defaultConfig };
+    
+    // Data Handler
+    const dataHandler = {
+      onDataChanged(data) {
+        allResults = data || [];
+        if (document.getElementById('teacher-screen').classList.contains('hidden') === false) {
+          renderResultsTable();
+        }
+      }
+    };
+    
+    // Initialize
+    async function initApp() {
+      try {
+        await window.dataSdk.init(dataHandler);
+      } catch (e) {
+        console.error('Data SDK init failed:', e);
+      }
+      
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange: async (newConfig) => {
+            config = { ...defaultConfig, ...newConfig };
+            updateUI();
+          },
+          mapToCapabilities: (cfg) => ({
+            recolorables: [],
+            borderables: [],
+            fontEditable: undefined,
+            fontSizeable: undefined
+          }),
+          mapToEditPanelValues: (cfg) => new Map([
+            ['game_title', cfg.game_title || defaultConfig.game_title],
+            ['teacher_name', cfg.teacher_name || defaultConfig.teacher_name]
+          ])
+        });
+        config = { ...defaultConfig, ...window.elementSdk.config };
+      }
+      
+      updateUI();
+    }
+    
+    function updateUI() {
+      document.getElementById('main-title').textContent = config.game_title || defaultConfig.game_title;
+      document.getElementById('teacher-credit').innerHTML = `Thiết kế: <span class="font-semibold">${config.teacher_name || defaultConfig.teacher_name}</span>`;
+    }
+    
+    // Shuffle array
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+    
+    // Shuffle options and track correct answer
+    function shuffleQuestion(question) {
+      if (question.type === 'drag-drop') return question;
+      
+      const shuffled = { ...question };
+      const originalOptions = [...question.options];
+      const correctOption = originalOptions[question.correct];
+      
+      shuffled.options = shuffleArray(originalOptions);
+      shuffled.correct = shuffled.options.indexOf(correctOption);
+      
+      return shuffled;
+    }
+    
+    // Start Game
+    function startGame() {
+      studentName = document.getElementById('student-name').value.trim();
+      studentClass = document.getElementById('student-class').value.trim();
+      
+      if (!studentName || !studentClass) {
+        showInlineError('Vui lòng nhập đầy đủ họ tên và lớp!');
+        return;
+      }
+      
+      // Shuffle questions and options
+      currentQuestions = shuffleArray(allQuestions).map(q => shuffleQuestion(q));
+      currentQuestionIndex = 0;
+      score = 0;
+      correctAnswers = 0;
+      gameStartTime = new Date();
+      
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      document.getElementById('player-name').textContent = studentName;
+      
+      loadQuestion();
+    }
+    
+    function showInlineError(message) {
+      const existingError = document.getElementById('inline-error');
+      if (existingError) existingError.remove();
+      
+      const errorDiv = document.createElement('div');
+      errorDiv.id = 'inline-error';
+      errorDiv.className = 'bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl mb-4 animate-shake';
+      errorDiv.textContent = message;
+      
+      const startBtn = document.getElementById('start-btn');
+      startBtn.parentNode.insertBefore(errorDiv, startBtn);
+      
+      setTimeout(() => errorDiv.remove(), 3000);
+    }
+    
+    // Load Question
+    function loadQuestion() {
+      const question = currentQuestions[currentQuestionIndex];
+      
+      // Update progress
+      const progress = ((currentQuestionIndex) / currentQuestions.length) * 100;
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+      document.getElementById('progress-text').textContent = `Câu ${currentQuestionIndex + 1}/${currentQuestions.length}`;
+      document.getElementById('current-score').textContent = score;
+      
+      // Set difficulty badge
+      const diffBadge = document.getElementById('difficulty-badge');
+      if (question.difficulty === 'nhan-biet') {
+        diffBadge.textContent = '📗 Nhận biết';
+        diffBadge.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-semibold';
+      } else if (question.difficulty === 'thong-hieu') {
+        diffBadge.textContent = '📘 Thông hiểu';
+        diffBadge.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-semibold';
+      } else {
+        diffBadge.textContent = '📕 Vận dụng';
+        diffBadge.className = 'px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-semibold';
+      }
+      
+      // Set question type badge
+      const typeBadge = document.getElementById('question-type-badge');
+      const typeLabels = {
+        'multiple': 'Trắc nghiệm',
+        'true-false': 'Đúng/Sai',
+        'drag-drop': 'Kéo thả',
+        'situation': 'Tình huống',
+        'calculation': 'Tính toán'
+      };
+      typeBadge.textContent = typeLabels[question.type] || 'Trắc nghiệm';
+      
+      // Set question text
+      document.getElementById('question-text').textContent = `Câu ${currentQuestionIndex + 1}: ${question.question}`;
+      
+      // Render options based on type
+      const optionsContainer = document.getElementById('options-container');
+      const dragDropContainer = document.getElementById('drag-drop-container');
+      
+      if (question.type === 'drag-drop') {
+        optionsContainer.classList.add('hidden');
+        dragDropContainer.classList.remove('hidden');
+        renderDragDrop(question);
+      } else {
+        optionsContainer.classList.remove('hidden');
+        dragDropContainer.classList.add('hidden');
+        renderOptions(question);
+      }
+      
+      // Start timer
+      startTimer(question.time);
+      
+      // Animate card
+      const card = document.getElementById('question-card');
+      card.classList.remove('animate-slide-up');
+      void card.offsetWidth;
+      card.classList.add('animate-slide-up');
+    }
+    
+    // Render Options
+    function renderOptions(question) {
+      const container = document.getElementById('options-container');
+      const letters = ['A', 'B', 'C', 'D'];
+      
+      container.innerHTML = question.options.map((opt, idx) => `
+        <button onclick="selectAnswer(${idx})" 
+                class="option-btn w-full p-4 text-left bg-white border-2 border-gray-200 rounded-xl hover:border-indigo-400 hover:bg-indigo-50 transition flex items-center gap-3">
+          <span class="w-10 h-10 flex items-center justify-center bg-indigo-100 text-indigo-700 font-bold rounded-full">${letters[idx]}</span>
+          <span class="flex-1 text-gray-800">${opt}</span>
+        </button>
+      `).join('');
+    }
+    
+    // Render Drag Drop
+    function renderDragDrop(question) {
+      dragDropAnswers = {};
+      
+      const items = shuffleArray(question.pairs.map(p => p.item));
+      const targets = [...new Set(question.pairs.map(p => p.target))];
+      
+      document.getElementById('drag-items').innerHTML = items.map(item => `
+        <div class="drag-item bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-semibold" 
+             draggable="true" 
+             ondragstart="dragStart(event, '${item}')"
+             ondragend="dragEnd(event)">
+          ${item}
+        </div>
+      `).join('');
+      
+      document.getElementById('drop-zones').innerHTML = targets.map(target => `
+        <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
+          <div class="font-bold text-gray-700 w-32">${target}:</div>
+          <div class="drop-zone flex-1 min-h-12 border-2 border-dashed border-gray-300 rounded-lg p-2 flex flex-wrap gap-2"
+               ondragover="dragOver(event)"
+               ondragleave="dragLeave(event)"
+               ondrop="drop(event, '${target}')"
+               data-target="${target}">
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    function dragStart(event, item) {
+      draggedItem = item;
+      event.target.classList.add('opacity-50');
+    }
+    
+    function dragEnd(event) {
+      event.target.classList.remove('opacity-50');
+    }
+    
+    function dragOver(event) {
+      event.preventDefault();
+      event.currentTarget.classList.add('drag-over');
+    }
+    
+    function dragLeave(event) {
+      event.currentTarget.classList.remove('drag-over');
+    }
+    
+    function drop(event, target) {
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+      
+      if (draggedItem) {
+        // Remove from previous location
+        Object.keys(dragDropAnswers).forEach(key => {
+          if (dragDropAnswers[key].includes(draggedItem)) {
+            dragDropAnswers[key] = dragDropAnswers[key].filter(i => i !== draggedItem);
+          }
+        });
+        
+        // Add to new location
+        if (!dragDropAnswers[target]) dragDropAnswers[target] = [];
+        dragDropAnswers[target].push(draggedItem);
+        
+        // Update display
+        updateDropZones();
+        
+        // Remove from drag items
+        const dragItems = document.getElementById('drag-items');
+        const dragElements = dragItems.querySelectorAll('.drag-item');
+        dragElements.forEach(el => {
+          if (el.textContent.trim() === draggedItem) {
+            el.style.display = 'none';
+          }
+        });
+      }
+      
+      draggedItem = null;
+    }
+    
+    function updateDropZones() {
+      const zones = document.querySelectorAll('.drop-zone');
+      zones.forEach(zone => {
+        const target = zone.dataset.target;
+        const items = dragDropAnswers[target] || [];
+        zone.innerHTML = items.map(item => `
+          <span class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-sm cursor-pointer"
+                onclick="removeFromZone('${item}', '${target}')">${item} ✕</span>
+        `).join('');
+      });
+    }
+    
+    function removeFromZone(item, target) {
+      dragDropAnswers[target] = dragDropAnswers[target].filter(i => i !== item);
+      updateDropZones();
+      
+      // Show in drag items again
+      const dragItems = document.getElementById('drag-items');
+      const dragElements = dragItems.querySelectorAll('.drag-item');
+      dragElements.forEach(el => {
+        if (el.textContent.trim() === item) {
+          el.style.display = 'block';
+        }
+      });
+    }
+    
+    function submitDragDrop() {
+      clearInterval(timerInterval);
+      
+      const question = currentQuestions[currentQuestionIndex];
+      let correctCount = 0;
+      
+      question.pairs.forEach(pair => {
+        if (dragDropAnswers[pair.target] && dragDropAnswers[pair.target].includes(pair.item)) {
+          correctCount++;
+        }
+      });
+      
+      const isCorrect = correctCount === question.pairs.length;
+      
+      if (isCorrect) {
+        score += 5;
+        correctAnswers++;
+      }
+      
+      showFeedback(isCorrect, question.explanation);
+    }
+    
+    // Timer
+    function startTimer(seconds) {
+      clearInterval(timerInterval);
+      timeLeft = seconds;
+      
+      const timerDisplay = document.getElementById('timer');
+      timerDisplay.textContent = timeLeft;
+      timerDisplay.parentElement.classList.remove('timer-warning');
+      
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerDisplay.textContent = timeLeft;
+        
+        if (timeLeft <= 5) {
+          timerDisplay.parentElement.classList.add('timer-warning');
+          timerDisplay.classList.add('animate-timer-pulse');
+        }
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeout();
+        }
+      }, 1000);
+    }
+    
+    function handleTimeout() {
+      const question = currentQuestions[currentQuestionIndex];
+      if (question.type === 'drag-drop') {
+        submitDragDrop();
+      } else {
+        showFeedback(false, `Hết giờ! ${question.explanation}`);
+      }
+    }
+    
+    // Select Answer
+    function selectAnswer(idx) {
+      clearInterval(timerInterval);
+      
+      const question = currentQuestions[currentQuestionIndex];
+      const isCorrect = idx === question.correct;
+      
+      // Highlight buttons
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === question.correct) {
+          btn.classList.add('bg-green-100', 'border-green-500');
+          btn.querySelector('span:first-child').classList.add('bg-green-500', 'text-white');
+        } else if (i === idx && !isCorrect) {
+          btn.classList.add('bg-red-100', 'border-red-500', 'animate-shake');
+          btn.querySelector('span:first-child').classList.add('bg-red-500', 'text-white');
+        }
+      });
+      
+      if (isCorrect) {
+        score += 5;
+        correctAnswers++;
+      }
+      
+      setTimeout(() => {
+        showFeedback(isCorrect, question.explanation);
+      }, 500);
+    }
+    
+    // Show Feedback
+    function showFeedback(isCorrect, explanation) {
+      const modal = document.getElementById('feedback-modal');
+      const icon = document.getElementById('feedback-icon');
+      const title = document.getElementById('feedback-title');
+      const text = document.getElementById('feedback-text');
+      const content = document.getElementById('feedback-content');
+      
+      if (isCorrect) {
+        icon.textContent = '🎉';
+        title.textContent = 'Chính xác!';
+        title.className = 'text-2xl font-bold mb-4 text-green-600';
+        content.classList.add('border-4', 'border-green-400');
+        content.classList.remove('border-red-400');
+      } else {
+        icon.textContent = '😅';
+        title.textContent = 'Chưa đúng!';
+        title.className = 'text-2xl font-bold mb-4 text-red-600';
+        content.classList.add('border-4', 'border-red-400');
+        content.classList.remove('border-green-400');
+      }
+      
+      text.textContent = explanation;
+      modal.classList.remove('hidden');
+    }
+    
+    // Next Question
+    function nextQuestion() {
+      document.getElementById('feedback-modal').classList.add('hidden');
+      currentQuestionIndex++;
+      
+      if (currentQuestionIndex >= currentQuestions.length) {
+        endGame();
+      } else {
+        loadQuestion();
+      }
+    }
+    
+    // End Game
+    async function endGame() {
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('result-screen').classList.remove('hidden');
+      
+      const wrongAnswers = currentQuestions.length - correctAnswers;
+      
+      document.getElementById('final-score').textContent = score;
+      document.getElementById('correct-count').textContent = correctAnswers;
+      document.getElementById('wrong-count').textContent = wrongAnswers;
+      document.getElementById('result-name').textContent = `${studentName} - ${studentClass}`;
+      
+      // Result message based on score
+      let icon, title, message;
+      if (score >= 90) {
+        icon = '🏆';
+        title = 'Xuất sắc!';
+        message = 'Bạn đã nắm vững kiến thức về Pin điện và Điện phân. Tuyệt vời!';
+        createConfetti();
+      } else if (score >= 70) {
+        icon = '🌟';
+        title = 'Giỏi lắm!';
+        message = 'Bạn hiểu khá tốt về chương này. Hãy ôn tập thêm để hoàn thiện hơn nhé!';
+      } else if (score >= 50) {
+        icon = '💪';
+        title = 'Khá tốt!';
+        message = 'Bạn đã có nền tảng cơ bản. Cố gắng ôn tập thêm để cải thiện điểm số!';
+      } else {
+        icon = '📚';
+        title = 'Cần cố gắng thêm!';
+        message = 'Hãy xem lại kiến thức chương Pin điện và Điện phân rồi thử lại nhé!';
+      }
+      
+      document.getElementById('result-icon').textContent = icon;
+      document.getElementById('result-title').textContent = title;
+      document.getElementById('result-message').textContent = message;
+      
+      // Save result
+      const endTime = new Date();
+      const duration = Math.round((endTime - gameStartTime) / 1000);
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      
+      if (allResults.length >= 999) {
+        console.warn('Đã đạt giới hạn 999 kết quả');
+        return;
+      }
+      
+      try {
+        const result = await window.dataSdk.create({
+          student_name: studentName,
+          student_class: studentClass,
+          score: score,
+          correct_answers: correctAnswers,
+          total_questions: currentQuestions.length,
+          completion_time: `${minutes}p ${seconds}s`,
+          submitted_at: new Date().toISOString()
+        });
+        
+        if (!result.isOk) {
+          console.error('Lưu kết quả thất bại');
+        }
+      } catch (e) {
+        console.error('Error saving result:', e);
+      }
+    }
+    
+    function createConfetti() {
+      const container = document.getElementById('result-confetti');
+      const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
+      
+      for (let i = 0; i < 30; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.animationDelay = `${Math.random() * 0.5}s`;
+        piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+        container.appendChild(piece);
+      }
+      
+      setTimeout(() => container.innerHTML = '', 2000);
+    }
+    
+    function restartGame() {
+      document.getElementById('result-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.remove('hidden');
+      
+      currentQuestions = shuffleArray(allQuestions).map(q => shuffleQuestion(q));
+      currentQuestionIndex = 0;
+      score = 0;
+      correctAnswers = 0;
+      gameStartTime = new Date();
+      
+      loadQuestion();
+    }
+    
+    function goHome() {
+      document.getElementById('result-screen').classList.add('hidden');
+      document.getElementById('teacher-screen').classList.add('hidden');
+      document.getElementById('game-screen').classList.add('hidden');
+      document.getElementById('start-screen').classList.remove('hidden');
+    }
+    
+    // Teacher Results
+    function showResults() {
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('teacher-screen').classList.remove('hidden');
+      renderResultsTable();
+    }
+    
+    function renderResultsTable() {
+      const tbody = document.getElementById('results-table');
+      
+      if (!allResults || allResults.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+              Chưa có kết quả nào
+            </td>
+          </tr>
+        `;
+        document.getElementById('total-students').textContent = '0';
+        document.getElementById('avg-score').textContent = '0';
+        document.getElementById('highest-score').textContent = '0';
+        return;
+      }
+      
+      // Sort by time (newest first)
+      const sortedResults = [...allResults].sort((a, b) => 
+        new Date(b.submitted_at) - new Date(a.submitted_at)
+      );
+      
+      // Calculate stats
+      const totalStudents = sortedResults.length;
+      const avgScore = Math.round(sortedResults.reduce((sum, r) => sum + (r.score || 0), 0) / totalStudents);
+      const highestScore = Math.max(...sortedResults.map(r => r.score || 0));
+      
+      document.getElementById('total-students').textContent = totalStudents;
+      document.getElementById('avg-score').textContent = avgScore;
+      document.getElementById('highest-score').textContent = highestScore;
+      
+      tbody.innerHTML = sortedResults.map((result, idx) => {
+        const date = result.submitted_at ? new Date(result.submitted_at) : new Date();
+        const dateStr = date.toLocaleDateString('vi-VN');
+        const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        
+        const scoreClass = (result.score || 0) >= 70 ? 'text-green-600' : (result.score || 0) >= 50 ? 'text-yellow-600' : 'text-red-600';
+        
+        return `
+          <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
+            <td class="px-4 py-3">${idx + 1}</td>
+            <td class="px-4 py-3 font-semibold">${result.student_name || 'N/A'}</td>
+            <td class="px-4 py-3">${result.student_class || 'N/A'}</td>
+            <td class="px-4 py-3 text-center font-bold ${scoreClass}">${result.score || 0}</td>
+            <td class="px-4 py-3 text-center">${result.correct_answers || 0}/${result.total_questions || 20}</td>
+            <td class="px-4 py-3 text-sm text-gray-600">${dateStr} ${timeStr}<br><span class="text-xs">${result.completion_time || ''}</span></td>
+          </tr>
+        `;
+      }).join('');
+    }
+    
+    function downloadResults() {
+      if (!allResults || allResults.length === 0) {
+        showDownloadMessage('Chưa có kết quả để tải xuống');
+        return;
+      }
+      
+      const headers = ['STT', 'Họ và tên', 'Lớp', 'Điểm', 'Số câu đúng', 'Tổng câu', 'Thời gian làm bài', 'Thời điểm nộp'];
+      
+      const rows = allResults.map((r, idx) => {
+        const date = r.submitted_at ? new Date(r.submitted_at) : new Date();
+        return [
+          idx + 1,
+          r.student_name || '',
+          r.student_class || '',
+          r.score || 0,
+          r.correct_answers || 0,
+          r.total_questions || 20,
+          r.completion_time || '',
+          date.toLocaleString('vi-VN')
+        ];
+      });
+      
+      // BOM for UTF-8
+      let csv = '\uFEFF' + headers.join(',') + '\n';
+      rows.forEach(row => {
+        csv += row.map(cell => `"${cell}"`).join(',') + '\n';
+      });
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ket_qua_pin_dien_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+      
+      showDownloadMessage('Đã tải xuống thành công!');
+    }
+    
+    function showDownloadMessage(message) {
+      const existingMsg = document.getElementById('download-msg');
+      if (existingMsg) existingMsg.remove();
+      
+      const msgDiv = document.createElement('div');
+      msgDiv.id = 'download-msg';
+      msgDiv.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg animate-slide-up';
+      msgDiv.textContent = message;
+      document.body.appendChild(msgDiv);
+      
+      setTimeout(() => msgDiv.remove(), 3000);
+    }
+    
+    // Initialize on load
+    initApp();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9c8992b891100aa5',t:'MTc3MDIwMTg3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
